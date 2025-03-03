@@ -1,0 +1,59 @@
+generator client {
+  provider             = "prisma-client-py"
+  interface            = "asyncio"
+  recursive_type_depth = "5"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id             Int              @id @default(autoincrement())
+  name           String
+  CategoryToPost CategoryToPost[]
+}
+
+model Post {
+  id             Int              @id @default(autoincrement())
+  title          String
+  published      Boolean          @default(false)
+  authorId       Int
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @default(now())
+  User           User             @relation(fields: [authorId], references: [id])
+  CategoryToPost CategoryToPost[]
+}
+
+model Profile {
+  id     Int    @id @default(autoincrement())
+  bio    String
+  userId Int    @unique
+  User   User   @relation(fields: [userId], references: [id])
+}
+
+model User {
+  id      Int      @id @default(autoincrement())
+  email   String   @unique
+  name    String?
+  role    Role     @default(USER)
+  Posts   Post[]
+  Profile Profile?
+}
+
+model CategoryToPost {
+  A        Int
+  B        Int
+  Category Category @relation(fields: [A], references: [id], onDelete: Cascade)
+  Post     Post     @relation(fields: [B], references: [id], onDelete: Cascade)
+
+  @@id([A, B], map: "_CategoryToPost_AB_pkey")
+  @@index([B], map: "_CategoryToPost_B_index")
+  @@map("_CategoryToPost")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
